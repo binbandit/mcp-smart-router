@@ -1,0 +1,8 @@
+[server]
+transport = "stdio"
+
+[downstreams.git]
+type = "stdio"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-git", "."]
+env = {}

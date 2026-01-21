@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use clap::Parser;
+use mcp_router_transport::client::manager::ClientManager;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -22,6 +23,14 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
     tracing::info!("Running command `{} {:?}`", args.command, args.args);
+
+    let client_manager = ClientManager::new();
+    client_manager
+        .spawn_client(&args.command, args.args)
+        .await?;
+
+    tokio::signal::ctrl_c().await?;
+    tracing::info!("Shutting down");
 
     Ok(())
 }

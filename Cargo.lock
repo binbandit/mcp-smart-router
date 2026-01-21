@@ -183,6 +183,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "mcp-router-transport",
  "tokio",
  "tracing",
  "tracing-subscriber",

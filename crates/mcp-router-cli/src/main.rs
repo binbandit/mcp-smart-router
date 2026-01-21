@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
 
     let client_manager = ClientManager::new();
     client_manager
-        .spawn_client(&args.command, args.args)
+        .spawn_client(&args.command, &args.args)
         .await?;
 
     tokio::signal::ctrl_c().await?;

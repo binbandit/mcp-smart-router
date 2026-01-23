@@ -33,11 +33,13 @@ async fn main() -> Result<()> {
         match downstream {
             DownstreamConfig::Stdio { command, args, .. } => {
                 tracing::info!("Connecting to downstream '{}': {} {:?}", id, command, args);
-                client_manager
-                    .spawn_client(id.clone(), &command, &args)
-                    .await?;
 
-                break;
+                if let Err(e) = client_manager
+                    .spawn_client(id.clone(), &command, &args)
+                    .await
+                {
+                    tracing::error!("Failed to connect to {}: {}", id, e);
+                }
             }
         }
     }

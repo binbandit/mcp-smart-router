@@ -1,18 +1,28 @@
 use anyhow::{Context, Result};
-use std::process::Stdio;
+use hashbrown::HashMap;
+use std::{process::Stdio, sync::Arc};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,
+    sync::RwLock,
 };
 
-pub struct ClientManager;
+pub struct ClientManager {
+    clients: RwLock<HashMap<String, Arc<DownstreamClient>>>,
+}
+
+pub struct DownstreamClient {
+    pub id: String,
+}
 
 impl ClientManager {
     pub fn new() -> Self {
-        Self
+        Self {
+            clients: RwLock::new(HashMap::new()),
+        }
     }
 
-    pub async fn spawn_client(&self, command: &str, args: &[String]) -> Result<()> {
+    pub async fn spawn_client(&self, id: String, command: &str, args: &[String]) -> Result<()> {
         let mut child = Command::new(command)
             .args(args)
             .stdin(Stdio::piped())
@@ -37,6 +47,9 @@ impl ClientManager {
         tokio::spawn(async move {
             let _stdin = stdin;
         });
+
+        let client = Arc::new(DownstreamClient { id: id.clone() });
+        self.clients.write().await.insert(id.clone(), client);
 
         tracing::info!("Successfully spawned client: {} {:?}", command, args);
         Ok(())

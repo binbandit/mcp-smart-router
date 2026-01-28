@@ -26,7 +26,16 @@ impl RouterServerHandler {
                     }
                 } else if let Some(tool_list) = tools["tools"].as_array() {
                     for tool in tool_list {
-                        all_tools.push(tool.clone());
+                        let mut tool = tool.clone();
+                        if let Some(obj) = tool.as_object_mut() {
+                            if let Some(name) = obj.get("name").and_then(|n| n.as_str()) {
+                                obj.insert(
+                                    "name".to_string(),
+                                    serde_json::json!(format!("{}__{}", server_id, name)),
+                                );
+                            }
+                        }
+                        all_tools.push(tool);
                     }
                 }
             }

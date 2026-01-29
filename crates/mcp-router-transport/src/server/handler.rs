@@ -47,6 +47,14 @@ impl RouterServerHandler {
     }
 
     pub async fn handle_call_tool(&self, name: &str, args: Value) -> Result<Value> {
-        Err(anyhow::anyhow!("Tool routing not implemnented yet"))
+        let parts: Vec<&str> = name.splitn(2, "__").collect();
+        if parts.len() != 2 {
+            return Err(anyhow::anyhow!("Invalid tool name foramt. Expected server_tool"));
+        }
+
+        let server_id = parts[0];
+        let tool_name = parts[1];
+
+        self.client_manager.call_tool(server_id, tool_name, args).await
     }
 }

@@ -12,3 +12,4 @@ thiserror.workspace = true
 tracing.workspace = true
 hashbrown.workspace = true
 uuid = { version = "1.19.0", features = ["v4"] }
+mcp-router-core = { path = "../mcp-router-core" }

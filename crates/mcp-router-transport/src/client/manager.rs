@@ -128,4 +128,49 @@ impl ClientManager {
             }
         }
     }
+
+    pub async fn call_tool(
+        &self,
+        server_id: &str,
+        tool_name: &str,
+        arguments: Value
+    ) -> Result<Value> {
+        let clients = self.clients.read().await;
+        let client = clients.get(server_id).context("Server not connected")?;
+
+        let id_val = Value::String(uuid::Uuid::new_v4().to_string());
+
+        let request = JsonRpcRequest {
+            jsonrpc: "2.0".to_string(),
+            id: id_val.clone(),
+            method: "tools/call".to_string(),
+            params: Some(serde_json::json!({
+                "name": tool_name,
+                "arguments": arguments
+            })),
+        };
+
+        // Register pending
+        let (tx, rx) = oneshot::channel();
+        {
+            let mut pending = client.pending_requests.write().await;
+            pending.insert(id_val.as_str().unwrap().to_string(), tx);
+        }
+
+        // Send
+        if let Err(_) = client.tx.send(JsonRpcMessage::Request(request)).await {
+            return Err(anyhow::anyhow!("Failed to send to client channel"));
+        }
+
+        // Wait
+        match tokio::time::timeout(std::time::Duration::from_secs(30), rx).await {
+            Ok(Ok(res)) => Ok(res?),
+            Ok(Err(_)) => Err(anyhow::anyhow!("Sender dropped")),
+            Err(_) => {
+                let mut pending = client.pending_requests.write().await;
+                pending.remove(id_val.as_str().unwrap());
+                Err(anyhow::anyhow!("Call tool timed out after 30s"))
+            }
+        }
+    }
 }

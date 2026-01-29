@@ -19,6 +19,9 @@ impl StdioServer {
 
         while let Ok(Some(line)) = lines.next_line().await {
             tracing::info!("Server received: {}", line);
+            if let Ok(msg) = serde_json::from_str::<crate::json_rpc::JsonRpcMessage>(&line) {
+                let _ = &self.handler;
+            }
         }
         Ok(())
     }

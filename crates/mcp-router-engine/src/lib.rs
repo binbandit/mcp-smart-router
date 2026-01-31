@@ -10,3 +10,6 @@ pub trait Router: Send + Sync {
     /// Add a tool to the router's index
     async fn add_tool(&self, server_id: &str, tool: Tool) -> Result<()>;
 }
+
+pub mod keyword;
+pub use keyword::KeywordRouter;

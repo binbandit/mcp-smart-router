@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1"
+tokio.workspace = true
 anyhow.workspace = true
+hashbrown.workspace = true
 mcp-router-core = { path = "../mcp-router-core" }

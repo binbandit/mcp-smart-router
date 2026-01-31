@@ -41,6 +41,12 @@ async fn main() -> Result<()> {
                     tracing::error!("Failed to connect to {}: {}", id, e);
                 }
             }
+            DownstreamConfig::Sse { url } => {
+                tracing::info!("Connecting to SSE downstream '{}': {}", id, url);
+                if let Err(e) = client_manager.spawn_sse_client(id.clone(), url).await {
+                    tracing::error!("Failed to connect to {}: {}", id, e);
+                }
+            }
         }
     }
 

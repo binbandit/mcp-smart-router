@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use eventsource_stream::Eventsource;
 use hashbrown::HashMap;
 use serde_json::Value;
 use std::{process::Stdio, sync::Arc};
@@ -7,6 +8,7 @@ use tokio::{
     process::Command,
     sync::{RwLock, mpsc, oneshot},
 };
+use tokio_stream::StreamExt;
 
 use crate::json_rpc::{JsonRpcMessage, JsonRpcRequest};
 
@@ -133,7 +135,7 @@ impl ClientManager {
         &self,
         server_id: &str,
         tool_name: &str,
-        arguments: Value
+        arguments: Value,
     ) -> Result<Value> {
         let clients = self.clients.read().await;
         let client = clients.get(server_id).context("Server not connected")?;
@@ -172,5 +174,67 @@ impl ClientManager {
                 Err(anyhow::anyhow!("Call tool timed out after 30s"))
             }
         }
+    }
+
+    pub async fn spawn_sse_client(&self, id: String, url: String) -> Result<()> {
+        let client = reqwest::Client::new();
+        let mut response = client
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to connect to SSE endpoint")?;
+
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "SSE connection failed with status: {}",
+                response.status()
+            ));
+        }
+
+        let (tx, mut rx) = mpsc::channel::<JsonRpcMessage>(32);
+        let pending_requests: Arc<RwLock<HashMap<String, oneshot::Sender<Result<Value>>>>> =
+            Arc::new(RwLock::new(HashMap::new()));
+        let pending = pending_requests.clone();
+
+        // Reader loop
+        let mut event_stream = response.bytes_stream().eventsource();
+
+        // consume events
+        tokio::spawn(async move {
+            while let Some(Ok(event)) = event_stream.next().await {
+                if event.event == "message" {
+                    if let Ok(msg) = serde_json::from_str::<JsonRpcMessage>(&event.data) {
+                        if let JsonRpcMessage::Response(res) = msg {
+                            if let Value::String(id_str) = res.id {
+                                if let Some(sender) = pending.write().await.remove(&id_str) {
+                                    let _ = sender.send(Ok(res.result.unwrap_or(Value::Null)));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        let client_clone = client.clone();
+        let url_clone = url.clone();
+
+        // Writer loop
+        tokio::spawn(async move {
+            while let Some(msg) = rx.recv().await {
+                let _ = client_clone.post(&url_clone).json(&msg).send().await;
+            }
+        });
+
+        let client_struct = Arc::new(DownstreamClient {
+            id: id.clone(),
+            tx,
+            pending_requests,
+        });
+
+        self.clients.write().await.insert(id.clone(), client_struct);
+        tracing::info!("Successfully connected SSE client: {}", id);
+
+        Ok(())
     }
 }

@@ -11,5 +11,8 @@ anyhow.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 hashbrown.workspace = true
-uuid = { version = "1.19.0", features = ["v4"] }
+reqwest = { version = "0.13.1", features = ["json", "stream"]}
+eventsource-stream = "0.2.3"
+tokio-stream = "0.1.18"
+uuid = { version = "1.20", features = ["v4"] }
 mcp-router-core = { path = "../mcp-router-core" }

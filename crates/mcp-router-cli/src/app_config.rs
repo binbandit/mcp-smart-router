@@ -23,4 +23,7 @@ pub enum DownstreamConfig {
         #[serde(default)]
         env: HashMap<String, String>,
     },
+    Sse {
+        url: String,
+    },
 }

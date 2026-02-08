@@ -18,17 +18,16 @@ pub trait VectorStore: Send + Sync {
 
 pub struct LanceDbStore {
     table: Table,
-    embedding_modle: TextEmbedding,
+    embedding_model: TextEmbedding,
 }
 
 impl LanceDbStore {
     pub async fn new(uri: &str) -> Result<Self> {
         let conn = connect(uri).execute().await?;
-        let embedding_model = TextEmbedding::try_new(InitOptions {
-            model_name: EmbeddingModel::AllMiniLML6V2,
-            show_download_progress: true,
-            ..Default::default()
-        })?;
+        let mut options = InitOptions::default();
+        options.model_name = EmbeddingModel::AllMiniLML6V2;
+        options.show_download_progress = true;
+        let embedding_model = TextEmbedding::try_new(options)?;
 
         Err(anyhow::anyhow!(
             "LanceDB initialization not fully implemented"
@@ -42,7 +41,7 @@ impl VectorStore for LanceDbStore {
         Ok(())
     }
 
-    async fn search(&self, query: &str, limit: uzize) -> Result<Vec<(ServerId, Tool)>> {
-        Ok(Vec![])
+    async fn search(&self, query: &str, limit: usize) -> Result<Vec<(ServerId, Tool)>> {
+        Ok(vec![])
     }
 }

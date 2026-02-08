@@ -13,6 +13,9 @@ tracing.workspace = true
 hashbrown.workspace = true
 reqwest = { version = "0.13.1", features = ["json", "stream"]}
 eventsource-stream = "0.2.3"
-tokio-stream = "0.1.18"
 uuid = { version = "1.20", features = ["v4"] }
 mcp-router-core = { path = "../mcp-router-core" }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures = "0.3"
+axum = { version = "0.8", features = ["macros"] }
+tower-http = { version = "0.6", features = ["cors"] }

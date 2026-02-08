@@ -12,4 +12,5 @@ pub trait Router: Send + Sync {
 }
 
 pub mod keyword;
+pub mod vector;
 pub use keyword::KeywordRouter;

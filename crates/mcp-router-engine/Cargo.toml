@@ -5,6 +5,11 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1"
+arrow-schema = "57"
+fastembed = "5"
+lancedb = "0.26"
+arrow-array = "57"
+futures = "0.3"
 tokio.workspace = true
 anyhow.workspace = true
 hashbrown.workspace = true
